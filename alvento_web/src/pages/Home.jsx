@@ -91,10 +91,10 @@ const Home = () => {
             state.currentScale += (state.targetScale - state.currentScale) * LERP_FACTOR;
 
             if (scrollWrapperRef.current) {
-                scrollWrapperRef.current.style.transform = `translateY(${-state.currentScroll}px)`;
+                scrollWrapperRef.current.style.transform = `translate3d(0, ${-state.currentScroll}px, 0)`;
             }
             if (videoContainerRef.current) {
-                videoContainerRef.current.style.transform = `rotate(-4deg) scale(${state.currentScale})`;
+                videoContainerRef.current.style.transform = `rotate(-4deg) scale3d(${state.currentScale}, ${state.currentScale}, 1)`;
             }
 
             animationFrameId.current = requestAnimationFrame(updateAnimation);
@@ -119,7 +119,8 @@ const Home = () => {
             state.targetScroll = Math.max(0, Math.min(state.targetScroll, state.maxScroll));
         };
 
-        window.addEventListener('wheel', handleWheel);
+        // Use passive listener for better performance
+        window.addEventListener('wheel', handleWheel, { passive: true });
         return () => window.removeEventListener('wheel', handleWheel);
     }, [isFullscreen]);
 
@@ -144,7 +145,10 @@ const Home = () => {
                     video.pause();
                 }
             });
-        }, { rootMargin: '100% 0px' });
+        }, { 
+            rootMargin: '100% 0px',
+            threshold: 0.1 // Add threshold for better performance
+        });
 
         sections.forEach(section => videoObserver.observe(section));
 

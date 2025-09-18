@@ -147,6 +147,7 @@ class Media {
     this.speed = 0;
     this.isBefore = false;
     this.isAfter = false;
+    this.lastTextureUpdate = 0;
     this.createShader();
     this.createMesh();
     this.createTitle();
@@ -260,7 +261,7 @@ class Media {
     });
   }
 
-  update(scroll, direction) {
+  update(scroll, direction, currentTime) {
     this.plane.position.x = this.x - scroll.current - this.extra;
 
     const x = this.plane.position.x;
@@ -285,12 +286,17 @@ class Media {
     }
 
     this.speed = scroll.current - scroll.last;
-    this.program.uniforms.uTime.value += 0.04;
+    
+    // Use currentTime for smoother time-based animations
+    this.program.uniforms.uTime.value = currentTime * 0.001;
     this.program.uniforms.uSpeed.value = this.speed;
 
-    // Update video texture if video is playing
-    if (this.video && this.video.readyState >= this.video.HAVE_CURRENT_DATA) {
-      this.program.uniforms.tMap.value.needsUpdate = true;
+    // Optimize video texture updates - only update when necessary
+    if (this.video && this.video.readyState >= this.video.HAVE_CURRENT_DATA && !this.video.paused) {
+      if (currentTime - this.lastTextureUpdate > 16.67) { // ~60fps
+        this.program.uniforms.tMap.value.needsUpdate = true;
+        this.lastTextureUpdate = currentTime;
+      }
     }
 
     const planeOffset = this.plane.scale.x / 2;
@@ -365,11 +371,19 @@ class App {
     this.renderer = new Renderer({
       alpha: true,
       antialias: true,
-      dpr: Math.min(window.devicePixelRatio || 1, 2)
+      dpr: Math.min(window.devicePixelRatio || 1, 2),
+      powerPreference: "high-performance"
     });
     this.gl = this.renderer.gl;
     this.gl.clearColor(0, 0, 0, 0);
-    this.container.appendChild(this.renderer.gl.canvas);
+    
+    // Enable hardware acceleration hints
+    const canvas = this.renderer.gl.canvas;
+    canvas.style.willChange = 'transform';
+    canvas.style.backfaceVisibility = 'hidden';
+    canvas.style.transformStyle = 'preserve-3d';
+    
+    this.container.appendChild(canvas);
   }
 
   createCamera() {
@@ -623,10 +637,24 @@ class App {
   update() {
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
     const direction = this.scroll.current > this.scroll.last ? 'right' : 'left';
+    
+    // Batch DOM updates and use requestAnimationFrame more efficiently
+    const updatePromises = [];
+    
     if (this.medias) {
-      this.medias.forEach(media => media.update(this.scroll, direction));
+      // Use performance.now() for more accurate timing
+      const now = performance.now();
+      
+      this.medias.forEach(media => {
+        media.update(this.scroll, direction, now);
+      });
     }
-    this.renderer.render({ scene: this.scene, camera: this.camera });
+    
+    // Render only when needed
+    if (Math.abs(this.scroll.current - this.scroll.last) > 0.001) {
+      this.renderer.render({ scene: this.scene, camera: this.camera });
+    }
+    
     this.scroll.last = this.scroll.current;
     this.raf = window.requestAnimationFrame(this.update.bind(this));
   }

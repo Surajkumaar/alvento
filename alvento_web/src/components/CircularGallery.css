@@ -3,8 +3,16 @@
   height: 100%;
   overflow: hidden;
   cursor: grab;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
 .circular-gallery:active {
   cursor: grabbing;
+}
+
+.circular-gallery canvas {
+  will-change: transform;
+  backface-visibility: hidden;
 }

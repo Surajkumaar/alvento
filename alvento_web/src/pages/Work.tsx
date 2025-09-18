@@ -1,53 +1,57 @@
 import React, { useState } from 'react';
-import CircularGallery from '../components/CircularGallery';
+// import CircularGallery from '../components/CircularGallery';
+import { ThreeDPhotoCarousel } from '@/components/ui/3d-carousel';
 
-const Work = () => {
-  const [selectedVideo, setSelectedVideo] = useState(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isZoomed, setIsZoomed] = useState(false);
+interface VideoData {
+  image: string;
+  title: string;
+  client: string;
+  year: string;
+  description: string;
+}
 
-  const handleCardClick = (videoData, index, event) => {
-    // First apply zoom and blur to gallery
-    setIsZoomed(true);
-    
-    // Reduced timeout for faster modal appearance
-    setTimeout(() => {
-      setSelectedVideo(videoData);
-      setIsAnimating(false);
-      
-      // Trigger modal slide-up animation with shorter delay
-      setTimeout(() => {
-        setIsAnimating(true);
-      }, 5); // Reduced from 10ms
-    }, 80); // Reduced from 100ms
-  };
+const Work: React.FC = () => {
+  const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
+  // const [isZoomed, setIsZoomed] = useState<boolean>(false);
+
+  // const handleCardClick = (videoData: VideoData, index: number, event: React.MouseEvent) => {
+  //   // First apply zoom and blur to gallery
+  //   setIsZoomed(true);
+  //   
+  //   // Then show modal after zoom animation
+  //   setTimeout(() => {
+  //     setSelectedVideo(videoData);
+  //     setIsAnimating(false);
+  //     
+  //     // Trigger modal slide-up animation
+  //     setTimeout(() => {
+  //       setIsAnimating(true);
+  //     }, 10);
+  //   }, 100);
+  // };
 
   const closeModal = () => {
-    // Immediately trigger the exit animation
     setIsAnimating(false);
-    
-    // Use a shorter timeout and optimize the cleanup
     setTimeout(() => {
       setSelectedVideo(null);
-      setIsZoomed(false);
-    }, 250); // Reduced from 400ms for snappier response
+      // setIsZoomed(false);
+    }, 400);
   };
 
   return (
     <div className="work-page">
-      <div style={{ height: '600px', position: 'relative' }}>
-        <CircularGallery 
-          bend={3} 
-          textColor="#ffffff" 
-          borderRadius={0.05} 
-          scrollEase={0.02}
-          onCardClick={handleCardClick}
-          className={isZoomed ? 'zoomed' : ''}
-        />
-      </div>
-      
       <div className="work-content">
         <div className="work-description">
+          <h2>Interactive 3D Photo Carousel</h2>
+          <p>
+            Experience our stunning 3D photo carousel featuring dynamic image loading from Unsplash. 
+            Drag to rotate the carousel and click on any image to view it in full detail. 
+            The carousel adapts to different screen sizes and provides smooth animations powered by Framer Motion.
+          </p>
+          <div className="carousel-container" style={{ marginTop: '2rem', height: '600px', backgroundColor: '#111', borderRadius: '15px', padding: '20px' }}>
+            <ThreeDPhotoCarousel />
+          </div>
         </div>
       </div>
 
